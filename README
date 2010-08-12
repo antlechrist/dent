@@ -1,0 +1,12 @@
+DENT - identi.ca client
+=======================
+
+Based on [identibash](http://lincgeek.org/linc/scripts/identibash), but for sh.
+
+Installation
+------------
+Put `dent` somewhere in your $PATH.
+
+Configuration
+-------------
+Copy `dentrc.def` to `~/.dentrc` and fill in your specific details.
