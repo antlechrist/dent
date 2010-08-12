@@ -1,0 +1,54 @@
+#!/bin/sh
+# Based in part on article found at
+# http://www.ibm.com/developerworks/linux/library/l-friendfeed/
+
+. ~/.dentrc
+
+maxitems=5
+puburl="http://identi.ca/${user}/all/rss"
+posturl="http://identi.ca/api/statuses/update.xml"
+tmpfile=/tmp/dent.tmp
+exc="${user} and friends"
+
+readpub() {
+#	clear
+	curl -s $puburl > $tmpfile
+	count=0
+	echo "-------------------------------------------"
+	while read line; do
+		if $(echo "${line}" | grep -v "$exc" | grep -q "title>")
+			then
+		echo "${line}" | sed 's/<title>//g' | sed 's/<\/title>//g'
+		fi
+
+		if $(echo "${line}" |grep -v "$exc" | grep -q "description>")
+			then
+		echo -n "${line}" | sed 's/<description>//g' | sed 's/<\/description>//g'
+		fi
+
+		if $(echo "${line}" | grep -q "dc:creator>")
+			then
+		echo "${line}" | sed 's/<dc:creator>/ by: /g' | sed 's/<\/dc:creator>//g'
+		fi
+
+		if $(echo "${line}" | grep -q "</item>")
+			then
+			echo "-------------------------------------------"
+			count=$((count + 1))
+			if [ $count -eq $maxitems ]
+				then
+				break
+			fi
+		fi
+	done < $tmpfile
+}
+
+postmsg() {
+	curl -s -u ${user}:${pass} -d status="$msg" ${posturl} 2>&1>/dev/null
+}
+
+getopts "rp:" flag
+case "${flag}" in
+	r) readpub ;;
+	p) msg=${OPTARG}; postmsg; readpub ;;
+esac

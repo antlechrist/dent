@@ -1,0 +1,58 @@
+#!/bin/bash
+# Based in part on article found at
+# http://www.ibm.com/developerworks/linux/library/l-friendfeed/
+
+maxitems=5
+user=antlechrist
+pass=andy1664
+puburl="http://identi.ca/antlechrist/all/rss"
+posturl="http://identi.ca/api/statuses/update.xml"
+
+exc="$user and friends"
+
+function readpub()
+	{
+#	clear
+	curl -s $puburl > /tmp/tweet.tmp
+	count=0
+	echo "-------------------------------------------"
+	while read line
+		do
+		if $(echo "${line}" | grep -v "$exc" | grep -q "title>")
+			then
+		echo "${line}" | sed 's/<title>//g' | sed 's/<\/title>//g'
+		fi
+
+		if $(echo "${line}" |grep -v "$exc" | grep -q "description>")
+			then
+		echo -n "${line}" | sed 's/<description>//g' | sed 's/<\/description>//g'
+		fi
+
+		if $(echo "${line}" | grep -q "dc:creator>")
+			then
+		echo "${line}" | sed 's/<dc:creator>/ by: /g' | sed 's/<\/dc:creator>//g'
+		fi
+
+		if $(echo "${line}" | grep -q "</item>")
+			then
+			echo "-------------------------------------------"
+			count=$((count + 1))
+			if [ $count -eq $maxitems ]
+				then
+				break
+			fi
+		fi
+		done < /tmp/tweet.tmp
+	}
+
+function postmsg()
+	{
+	curl -s -u ${user}:${pass} -d status="$msg" ${posturl} 2>&1>/dev/null
+	}
+
+
+getopts "rp:" flag
+case "${flag}" in
+	r) readpub ;;
+	p) msg=${OPTARG}; postmsg; readpub ;;
+esac
