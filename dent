@@ -4,23 +4,23 @@
 
 . ~/.dentrc
 
-maxitems=5
-puburl="http://identi.ca/${user}/all/rss"
-posturl="http://identi.ca/api/statuses/update.xml"
-tmpfile=~/.dent.tmp
-exc="${user} and friends"
+MAXITEMS=5
+PUBURL="http://identi.ca/${user}/all/rss"
+POSTURL="http://identi.ca/api/statuses/update.xml"
+TMPFILE=~/.dent.tmp
+EXCLUDE="${user} and friends"
 
 readpub() {
 	clear
-	curl -s $puburl > $tmpfile
+	curl -s $PUBURL > $TMPFILE
 	count=0
 	echo "-------------------------------------------"
 	while read line; do
-		if $(echo "${line}" | grep -v "$exc" | grep -q "title>"); then
+		if $(echo "${line}" | grep -v "$EXCLUDE" | grep -q "title>"); then
 			echo "${line}" | sed 's/<title>//g' | sed 's/<\/title>//g'
 		fi
 
-		if $(echo "${line}" |grep -v "$exc" | grep -q "description>"); then
+		if $(echo "${line}" | grep -v "$EXCLUDE" | grep -q "description>"); then
 			echo -n "${line}" | sed 's/<description>//g' | sed 's/<\/description>//g'
 		fi
 
@@ -31,15 +31,15 @@ readpub() {
 		if $(echo "${line}" | grep -q "</item>"); then
 			echo "-------------------------------------------"
 			count=$((count + 1))
-			if [ $count -eq $maxitems ]; then
+			if [ $count -eq $MAXITEMS ]; then
 				break
 			fi
 		fi
-	done < $tmpfile
+	done < $TMPFILE
 }
 
 postmsg() {
-	curl -s -u ${user}:${pass} -d status="$msg" ${posturl} 2>&1>/dev/null
+	curl -s -u ${user}:${pass} -d status="$msg" ${POSTURL} 2>&1>/dev/null
 }
 
 getopts "rp:" flag
