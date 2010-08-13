@@ -1,28 +1,26 @@
 #!/bin/sh
-#
-# Based on identibash
 
 . ~/.dentrc
 
 BASEURL="http://identi.ca/api/statuses"
-FRIENDURL="$BASEURL/friends_timeline/${user}.rss"
-#PUBLICURL="$BASEURL/public_timeline.rss"
+FRIENDURL="$BASEURL/friends_timeline/$user.rss"
 UPDATEURL="$BASEURL/update.xml"
 ITEMS=5
 TMPFILE=~/.dent.tmp
-HR="---"
 EXCLUDE="$user and friends"
 
-# Thanks Chess :)
 crunch() {
 	echo "$@" | tr -s ' ' | fmt -78
 }
 
+postmsg() {
+	curl -s -u $user:$pass -d status="$MSG" $UPDATEURL 2>&1>/dev/null
+}
+
 readmsg() {
-#	clear
 	curl -s $FRIENDURL > $TMPFILE
 	COUNT=0
-	echo $HR
+	echo '---'
 	while read line; do
 		if $(echo "${line}" | grep -v "$EXCLUDE" | grep -q "title>"); then
 			crunch "${line}" | sed 's/<title>//g' | sed 's/<\/title>//g'
@@ -33,7 +31,7 @@ readmsg() {
 		fi
 
 		if $(echo "${line}" | grep -q "</item>"); then
-			echo $HR
+			echo '---'
 			COUNT=$((COUNT + 1))
 			if [ $COUNT -eq $ITEMS ]; then
 				break
@@ -42,14 +40,10 @@ readmsg() {
 	done < $TMPFILE
 }
 
-postmsg() {
-	curl -s -u ${user}:${pass} -d status="$MSG" ${UPDATEURL} 2>&1>/dev/null
-}
-
-getopts "arp:" OPT
+getopts "p:r" OPT
 case $OPT in
 p)
-	MSG=${OPTARG}
+	MSG=$OPTARG
 	postmsg
 	;;
 r)
