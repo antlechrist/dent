@@ -13,6 +13,11 @@ TMPFILE=~/.dent.tmp
 HR="---"
 EXCLUDE="$user and friends"
 
+# Thanks Chess :)
+crunch() {
+	echo "$@" | tr -s ' ' | fmt -78
+}
+
 readmsg() {
 #	clear
 	curl -s $FRIENDURL > $TMPFILE
@@ -20,11 +25,11 @@ readmsg() {
 	echo $HR
 	while read line; do
 		if $(echo "${line}" | grep -v "$EXCLUDE" | grep -q "title>"); then
-			echo "${line}" | sed 's/<title>//g' | sed 's/<\/title>//g'
+			crunch "${line}" | sed 's/<title>//g' | sed 's/<\/title>//g'
 		fi
 
 		if $(echo "${line}" | grep -v "$EXCLUDE" | grep -q "pubDate>"); then
-			echo "${line}" | sed 's/<pubDate>/on: /g' | sed 's/<\/pubDate>//g'
+			crunch "${line}" | sed 's/<pubDate>/on: /g' | sed 's/<\/pubDate>//g'
 		fi
 
 		if $(echo "${line}" | grep -q "</item>"); then
