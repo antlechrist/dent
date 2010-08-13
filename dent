@@ -4,34 +4,33 @@
 
 . ~/.dentrc
 
-MAXITEMS=5
-PUBURL="http://identi.ca/${user}/all/rss"
-POSTURL="http://identi.ca/api/statuses/update.xml"
+BASEURL="http://identi.ca/api/statuses"
+FRIENDURL="$BASEURL/friends_timeline/${user}.rss"
+#PUBLICURL="$BASEURL/public_timeline.rss"
+UPDATEURL="$BASEURL/update.xml"
+ITEMS=5
 TMPFILE=~/.dent.tmp
-EXCLUDE="${user} and friends"
+HR="---"
+EXCLUDE="$user and friends"
 
-readpub() {
-	clear
-	curl -s $PUBURL > $TMPFILE
-	count=0
-	echo "-------------------------------------------"
+readmsg() {
+#	clear
+	curl -s $FRIENDURL > $TMPFILE
+	COUNT=0
+	echo $HR
 	while read line; do
 		if $(echo "${line}" | grep -v "$EXCLUDE" | grep -q "title>"); then
 			echo "${line}" | sed 's/<title>//g' | sed 's/<\/title>//g'
 		fi
 
-		if $(echo "${line}" | grep -v "$EXCLUDE" | grep -q "description>"); then
-			echo -n "${line}" | sed 's/<description>//g' | sed 's/<\/description>//g'
-		fi
-
-		if $(echo "${line}" | grep -q "dc:creator>"); then
-			echo "${line}" | sed 's/<dc:creator>/ by: /g' | sed 's/<\/dc:creator>//g'
+		if $(echo "${line}" | grep -v "$EXCLUDE" | grep -q "pubDate>"); then
+			echo "${line}" | sed 's/<pubDate>/on: /g' | sed 's/<\/pubDate>//g'
 		fi
 
 		if $(echo "${line}" | grep -q "</item>"); then
-			echo "-------------------------------------------"
-			count=$((count + 1))
-			if [ $count -eq $MAXITEMS ]; then
+			echo $HR
+			COUNT=$((COUNT + 1))
+			if [ $COUNT -eq $ITEMS ]; then
 				break
 			fi
 		fi
@@ -39,11 +38,16 @@ readpub() {
 }
 
 postmsg() {
-	curl -s -u ${user}:${pass} -d status="$msg" ${POSTURL} 2>&1>/dev/null
+	curl -s -u ${user}:${pass} -d status="$MSG" ${UPDATEURL} 2>&1>/dev/null
 }
 
-getopts "rp:" flag
-case "${flag}" in
-	r) readpub ;;
-	p) msg=${OPTARG}; postmsg; readpub ;;
+getopts "arp:" OPT
+case $OPT in
+p)
+	MSG=${OPTARG}
+	postmsg
+	;;
+r)
+	readmsg
+	;;
 esac
