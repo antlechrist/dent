@@ -48,5 +48,6 @@ p)
 	;;
 r)
 	readmsg
+	rm -f $TMPFILE
 	;;
 esac
